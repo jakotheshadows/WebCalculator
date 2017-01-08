@@ -1,0 +1,227 @@
+﻿@*
+    DoCalculator.cshtml
+    Authors: Anthony Wolf
+    Date: 1/8/2017
+    Implements and displays controls for the calculator, sends requests to the HomeController/DoCalculator action and receives its responses    
+*@
+
+@model WebCalculator.Models.CalculatorModel
+
+@{
+    ViewBag.Title = "DoCalculator";
+}
+
+<h2>Calculator</h2>
+
+
+<div class="row">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        <input disabled class="input-lg" id="display" />
+        <table>
+            <tbody>
+                <tr class="btn-group-lg">
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="1button">1</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="2button">2</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="3button">3</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn operationButton" id="addbutton">+</button>
+                    </td>
+                </tr>
+                <tr class="btn-group-lg">
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="4button">4</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="5button">5</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="6button">6</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn operationButton" id="subtractbutton">-</button>
+                    </td>
+                </tr>
+                <tr class="btn-group-lg">
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="7button">7</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="8button">8</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="9button">9</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn operationButton" id="multiplybutton">*</button>
+                    </td>
+                </tr>
+                <tr class="btn-group-lg">
+                    <td>
+                        <button class="btn-lg calculator-btn numberButton" id="0button">0</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn" onclick="doDecimal();" id="decimalbutton">.</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn" id="equalsbutton">=</button>
+                    </td>
+                    <td>
+                        <button class="btn-lg calculator-btn operationButton" id="dividebutton">/</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn-lg" id="clearbutton" onclick="reset();">Clear</button>
+        <label class="label-danger" id="errorLabel"></label>
+    </div>
+    <div class="col-md-4"></div>
+</div>
+<div style="display:none;" id="data-values">
+    <div id="lOperand" data-value=""></div>
+    <div id="rOperand" data-value=""></div>
+    <div id="operation" data-value=""></div>
+</div>
+<script type="text/javascript">
+    function reset() {
+        var curDisplay = document.getElementById('display');
+        var loperand = document.getElementById('lOperand');
+        var roperand = document.getElementById('rOperand');
+        var operation = document.getElementById('operation');
+        curDisplay.value = '';
+        loperand.dataset.value = '';
+        roperand.dataset.value = '';
+        operation.dataset.value = '';
+    }
+
+    function doNumberButton(numberButton) {
+        var curDisplay = document.getElementById('display');
+        var result = (curDisplay.value || '') + numberButton.textContent;
+        curDisplay.value = result;
+    }
+
+    function doOperationButton(operationButton) {
+        var lOperand = document.getElementById('lOperand');
+        var operation = document.getElementById('operation');
+        var curDisplay = document.getElementById('display');
+        if (!curDisplay.value && !lOperand.dataset.value) {
+            return;
+        }
+        if (!operation.dataset.value || operation.dataset.value === null) {
+            lOperand.dataset.value = curDisplay.value;
+            operation.dataset.value = operationButton.textContent;
+            curDisplay.value = null;
+        }
+        else {
+            operation.dataset.value = operationButton.textContent;
+        }
+    }
+
+    function evaluate() {
+        var curDisplay = document.getElementById('display');
+        if (!curDisplay.value || curDisplay.value === null)
+            return;
+        var lOperand = document.getElementById('lOperand');
+        if (!lOperand.dataset.value || lOperand.dataset.value === null)
+            return;
+        var operation = document.getElementById('operation');
+        if (!operation.dataset.value || operation.dataset.value === null)
+            return;
+        var rOperand = document.getElementById('rOperand');
+        rOperand.dataset.value = display.value;
+        //send an ajax request for the server to perform the operation
+        $.post(
+            '@Url.Action("DoCalculator", "Home")',
+            {
+                LOperand: lOperand.dataset.value,
+                ROperand: rOperand.dataset.value,
+                Operator: operation.dataset.value
+            },
+            function (model) {
+                curDisplay.value = model.LOperand;
+                lOperand.dataset.value = '';
+                rOperand.dataset.value = '';
+                operation.dataset.value = '';
+                document.getElementById('errorLabel').textContent = '';
+            }
+        )
+        .fail(function () {
+            document.getElementById('errorLabel').textContent = 'An Error Has Occurred';
+            reset();
+        });
+    }
+
+    function doDecimal() {
+        var curDisplay = document.getElementById('display');
+        if (!curDisplay.value.includes('.')) {
+            curDisplay.value += '.';
+        }
+    }
+
+    $(document).keydown(function (e) {
+        var isBoundKey = true;
+        if (e.which >= 48 && e.which <= 57)
+        {
+            //top row numbers
+            var num = e.which - 48;
+            document.getElementById(num + 'button').click();
+        }
+        else if(e.which >= 96 && e.which <= 105)
+        {
+            //numpad numbers
+            var num = e.which - 96;
+            document.getElementById(num + 'button').click();
+        }
+        else if(e.which >= 106 && e.which <= 111 && e.which != 108)
+        {
+            switch(e.which)
+            {
+                case 106:
+                    document.getElementById('multiplybutton').click();
+                    break;
+                case 107:
+                    document.getElementById('addbutton').click();
+                    break;
+                case 109:
+                    document.getElementById('subtractbutton').click();
+                    break;
+                case 110:
+                    document.getElementById('decimalbutton').click();
+                    break;
+                case 111:
+                    document.getElementById('dividebutton').click();
+                    break;
+                default:
+                    isBoundKey = false;
+                    break;
+            }
+        }
+        else if(e.which == 13)
+        {
+            document.getElementById('equalsbutton').click();
+        }
+        else
+        {
+            isBoundKey = false;
+        }
+        if (isBoundKey) {
+            e.preventDefault();
+        }
+    });
+
+    $(document).ready(function () {
+        $('.numberButton').on('click', function () { doNumberButton(this); });
+        $('.operationButton').on('click', function () { doOperationButton(this); });
+        $('#equalsbutton').on('click', function () { evaluate(); });
+    })
+</script>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
